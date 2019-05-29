@@ -2,11 +2,13 @@
 
 Some useful third-party tools based [Cargo](https://github.com/rust-lang/cargo).
 
+# Commands
+
+## dargo upgrade
+
+Just like [cargo-edit](https://github.com/killercup/cargo-edit), but query from local registry index rather than HTTP API
+
 # TODO 
-
-## dargo upgrade 
-
-Just like [cargo-edit](https://github.com/killercup/cargo-edit), but query from local registry index rather than HTTP API, caused by [this](https://github.com/killercup/cargo-edit/pull/292#issuecomment-490436530)
 
 ## dargo add
 
