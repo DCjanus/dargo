@@ -1,7 +1,7 @@
 use crate::DargoResult;
 use cargo::core::{Dependency, SourceId, Workspace};
 use colored::Colorize;
-use semver::Version;
+use semver::{Version, VersionReq};
 use std::{collections::HashSet, io::Write, path::PathBuf};
 use structopt::StructOpt;
 use toml_edit::Document;
@@ -30,11 +30,11 @@ pub struct Upgrade {
     pre: bool,
 
     /// Print changes to be made without actual make
-    #[structopt(name = "dry", long, short)]
+    #[structopt(name = "dry", long)]
     dry: bool,
 
     /// Update index before query latest version
-    #[structopt(name = "update", long, short)]
+    #[structopt(name = "update", long)]
     update: bool,
 }
 
@@ -46,7 +46,7 @@ struct UpgradeTask {
 }
 
 impl Upgrade {
-    fn manifest(&self) -> DargoResult<PathBuf> {
+    fn manifest_path(&self) -> DargoResult<PathBuf> {
         let mut manifest_path = PathBuf::from(&self.manifest);
         if manifest_path.is_dir() {
             manifest_path = manifest_path.join("Cargo.toml");
@@ -70,11 +70,13 @@ impl Upgrade {
             dependency.kind(),
             dependency.platform(),
             dependency.name_in_toml().as_str(),
-        );
+        )
+        .unwrap();
 
         let latest_version = match crate::crates::latest_version(
             dependency.package_name().as_str(),
             dependency.source_id(),
+            VersionReq::any(),
             self.pre,
         )? {
             None => {
@@ -112,7 +114,7 @@ impl Upgrade {
 
     pub fn run(self) -> DargoResult<()> {
         let config = &cargo::Config::default()?;
-        let workspace = Workspace::new(&self.manifest()?, config)?;
+        let workspace = Workspace::new(&self.manifest_path()?, config)?;
 
         let mut index_updated: HashSet<SourceId> = HashSet::new();
         let only = self
@@ -158,20 +160,18 @@ impl Upgrade {
                     task.pre_version.strikethrough(),
                     task.new_version.bright_green(),
                 )?;
+                crate::crates::put_dependency_version_req_text(
+                    &mut document,
+                    task.dependency.kind(),
+                    task.dependency.platform(),
+                    &task.dependency.name_in_toml(),
+                    &task.new_version,
+                );
             }
             tw.flush()?;
             println!("{}", String::from_utf8(tw.into_inner()?)?);
 
             if !self.dry {
-                for task in upgrade_tasks {
-                    crate::crates::put_dependency_version_req_text(
-                        &mut document,
-                        task.dependency.kind(),
-                        task.dependency.platform(),
-                        &task.dependency.name_in_toml(),
-                        &task.new_version,
-                    );
-                }
                 std::fs::write(manifest_path, document.to_string())?;
             }
         }

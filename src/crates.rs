@@ -7,7 +7,7 @@ use cargo::{
     },
     sources::SourceConfigMap,
 };
-use semver::Version;
+use semver::{Version, VersionReq};
 use toml_edit::Document;
 
 pub fn update_index(source_id: SourceId) -> DargoResult<()> {
@@ -21,11 +21,13 @@ pub fn update_index(source_id: SourceId) -> DargoResult<()> {
 pub fn latest_version(
     name: &str,
     source_id: SourceId,
+    version_req: VersionReq,
     allow_prerelease: bool,
 ) -> DargoResult<Option<Version>> {
     let config = cargo::Config::default()?;
     let source_config_map = SourceConfigMap::new(&config)?;
-    let dependency = Dependency::parse_no_deprecated(name, None, source_id)?;
+    let mut dependency = Dependency::parse_no_deprecated(name, None, source_id)?;
+    dependency.set_version_req(version_req);
 
     let mut result: Option<Version> = None;
 
@@ -57,7 +59,7 @@ pub fn get_dependency_version_req_text<'a>(
     kind: DependencyKind,
     platform: Option<&Platform>,
     name_in_toml: &str,
-) -> &'a str {
+) -> Option<&'a str> {
     let item = match platform {
         None => &document[locate_dependency(kind)][name_in_toml],
         Some(platform) => {
@@ -66,9 +68,9 @@ pub fn get_dependency_version_req_text<'a>(
     };
 
     if item.is_str() {
-        item.as_str().unwrap()
+        item.as_str()
     } else {
-        item["version"].as_str().unwrap()
+        item["version"].as_str()
     }
 }
 
@@ -87,7 +89,7 @@ pub fn put_dependency_version_req_text(
     };
 
     let new_value = toml_edit::value(new_text);
-    if item.is_str() {
+    if item.is_str() || item.is_none() {
         *item = new_value;
     } else {
         item["version"] = new_value;
