@@ -1,8 +1,15 @@
 [package]
 name = "dargo"
-version = "0.1.0"
+version = "0.0.1"
 authors = ["DCjanus <dcjanus@dcjanus.com>"]
 edition = "2018"
+description = "Some useful third-party tools for Cargo"
+repository = "https://github.com/DCjanus/dargo"
+categories = [
+    "command-line-utilities",
+    "development-tools",
+]
+license-file = "LICENSE"
 
 [dependencies]
 cargo = "0.35.0"

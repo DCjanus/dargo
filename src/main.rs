@@ -9,7 +9,9 @@ use structopt::StructOpt;
 
 pub type DargoResult<T> = std::result::Result<T, failure::Error>;
 
+/// Some useful third-party tools for Cargo
 #[derive(Debug, StructOpt)]
+#[structopt(after_help = "issue report: https://github.com/DCjanus/dargo")]
 enum Args {
     #[structopt(name = "upgrade")]
     Upgrade(commands::upgrade::Upgrade),
