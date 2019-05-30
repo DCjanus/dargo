@@ -1,27 +1,40 @@
 use crate::DargoResult;
-use cargo::core::{Dependency, Workspace};
+use cargo::core::{Dependency, SourceId, Workspace};
 use colored::Colorize;
 use semver::Version;
-use std::{env::current_dir, io::Write, path::PathBuf};
+use std::{collections::HashSet, io::Write, path::PathBuf};
 use structopt::StructOpt;
 use toml_edit::Document;
 
 #[derive(Debug, StructOpt)]
 pub struct Upgrade {
     /// Path to the manifest to upgrade
-    #[structopt(long, value_name = "path")]
-    manifest: Option<String>,
+    #[structopt(name = "manifest", long, value_name = "path", default_value = ".")]
+    manifest: String,
 
-    /// Include prerelease versions when fetching from crates.io(e,g. "0.3.0-alpha.15")
-    #[structopt(long)]
+    /// Upgrade dependencies only these
+    #[structopt(
+        name = "only",
+        long,
+        value_name = "dependencies",
+        conflicts_with = "exclude"
+    )]
+    only: Vec<String>,
+
+    /// Upgrade dependencies exclude these
+    #[structopt(name = "exclude", long, value_name = "dependencies")]
+    exclude: Vec<String>,
+
+    /// Include prerelease versions when try to upgrade(e,g. "0.3.0-alpha.15")
+    #[structopt(name = "pre", long)]
     pre: bool,
 
-    /// Print changes to be made without actual make.
-    #[structopt(long, short)]
+    /// Print changes to be made without actual make
+    #[structopt(name = "dry", long, short)]
     dry: bool,
 
-    /// TODO: Update index before query latest version
-    #[structopt(long, short)]
+    /// Update index before query latest version
+    #[structopt(name = "update", long, short)]
     update: bool,
 }
 
@@ -34,17 +47,12 @@ struct UpgradeTask {
 
 impl Upgrade {
     fn manifest(&self) -> DargoResult<PathBuf> {
-        let value = match &self.manifest {
-            None => return Ok(current_dir()?.join("Cargo.toml")),
-            Some(x) => x,
-        };
-
-        let abspath = PathBuf::from(value).canonicalize()?;
-        if abspath.is_dir() {
-            Ok(abspath.join("Cargo.toml"))
-        } else {
-            Ok(abspath)
+        let mut manifest_path = PathBuf::from(&self.manifest);
+        if manifest_path.is_dir() {
+            manifest_path = manifest_path.join("Cargo.toml");
         }
+
+        Ok(manifest_path.canonicalize()?)
     }
 
     fn gen_upgrade_task(
@@ -106,28 +114,46 @@ impl Upgrade {
         let config = &cargo::Config::default()?;
         let workspace = Workspace::new(&self.manifest()?, config)?;
 
+        let mut index_updated: HashSet<SourceId> = HashSet::new();
+        let only = self
+            .only
+            .iter()
+            .map(String::as_str)
+            .collect::<HashSet<&str>>();
+        let exclude = self
+            .exclude
+            .iter()
+            .map(String::as_str)
+            .collect::<HashSet<&str>>();
+
         for package in workspace.members() {
             let manifest_path = package.manifest_path();
-            let manifest_text = file::get_text(manifest_path)?;
+            let manifest_text = std::fs::read_to_string(manifest_path)?;
             let mut document: Document = manifest_text.parse()?;
 
-            let upgrade_tasks: Vec<UpgradeTask> = package
-                .dependencies()
-                .iter()
-                .map(|dependency: &Dependency| self.gen_upgrade_task(&document, dependency))
-                .filter_map(|x: DargoResult<Option<UpgradeTask>>| match x {
-                    Ok(Some(task)) => Some(Ok(task)),
-                    Ok(None) => None,
-                    Err(error) => Some(Err(error)),
-                })
-                .collect::<DargoResult<Vec<UpgradeTask>>>()?;
+            let mut upgrade_tasks = Vec::new();
 
-            println!("{}:", package.name().magenta());
+            for dependency in package.dependencies() {
+                if !only.is_empty() && !only.contains(dependency.name_in_toml().as_str()) {
+                    continue;
+                }
+                if !exclude.is_empty() && exclude.contains(dependency.name_in_toml().as_str()) {
+                    continue;
+                }
+                if self.update && index_updated.insert(dependency.source_id()) {
+                    crate::crates::update_index(dependency.source_id())?;
+                }
+                if let Some(task) = self.gen_upgrade_task(&document, dependency)? {
+                    upgrade_tasks.push(task);
+                }
+            }
+
             let mut tw = tabwriter::TabWriter::new(vec![]);
+            writeln!(tw, "{}:", package.name().magenta())?;
             for task in &upgrade_tasks {
                 writeln!(
                     tw,
-                    "{}\t{} -> {}",
+                    "{}\t{}\t{}",
                     task.dependency.name_in_toml(),
                     task.pre_version.strikethrough(),
                     task.new_version.bright_green(),
@@ -146,7 +172,7 @@ impl Upgrade {
                         &task.new_version,
                     );
                 }
-                file::put_text(manifest_path, document.to_string())?;
+                std::fs::write(manifest_path, document.to_string())?;
             }
         }
 

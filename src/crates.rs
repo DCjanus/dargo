@@ -10,6 +10,14 @@ use cargo::{
 use semver::Version;
 use toml_edit::Document;
 
+pub fn update_index(source_id: SourceId) -> DargoResult<()> {
+    // XXX better look for updating index
+    SourceConfigMap::new(&cargo::Config::default()?)?
+        .load(source_id, &Default::default())?
+        .update()?;
+    Ok(())
+}
+
 pub fn latest_version(
     name: &str,
     source_id: SourceId,
@@ -36,7 +44,7 @@ pub fn latest_version(
     Ok(result)
 }
 
-pub fn dependency_section(kind: DependencyKind) -> &'static str {
+pub fn locate_dependency(kind: DependencyKind) -> &'static str {
     match kind {
         DependencyKind::Normal => "dependencies",
         DependencyKind::Development => "dev-dependencies",
@@ -51,9 +59,9 @@ pub fn get_dependency_version_req_text<'a>(
     name_in_toml: &str,
 ) -> &'a str {
     let item = match platform {
-        None => &document[dependency_section(kind)][name_in_toml],
+        None => &document[locate_dependency(kind)][name_in_toml],
         Some(platform) => {
-            &document["target"][platform.to_string()][dependency_section(kind)][name_in_toml]
+            &document["target"][platform.to_string()][locate_dependency(kind)][name_in_toml]
         }
     };
 
@@ -72,9 +80,9 @@ pub fn put_dependency_version_req_text(
     new_text: &str,
 ) {
     let item = match platform {
-        None => &mut document[dependency_section(kind)][name_in_toml],
+        None => &mut document[locate_dependency(kind)][name_in_toml],
         Some(platform) => {
-            &mut document["target"][platform.to_string()][dependency_section(kind)][name_in_toml]
+            &mut document["target"][platform.to_string()][locate_dependency(kind)][name_in_toml]
         }
     };
 
