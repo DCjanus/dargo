@@ -1,6 +1,6 @@
 # Dargo
 
-[![release](https://img.shields.io/badge/crates.io-v0.0.1-orange.svg?longCache=true)](https://crates.io/crates/dargo)
+[![release](https://img.shields.io/crates/v/dargo.svg)](https://crates.io/crates/dargo)
 [![dependency status](https://deps.rs/repo/github/dcjanus/dargo/status.svg)](https://deps.rs/repo/github/dcjanus/dargo)
 [![LOC](https://tokei.rs/b1/github/dcjanus/dargo)](https://github.com/dcjanus/dargo)
 
