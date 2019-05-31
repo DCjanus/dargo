@@ -18,6 +18,7 @@ fn main() {
     let command_result = match Command::from_args() {
         Command::Upgrade(x) => x.run(),
         Command::Add(x) => x.run(),
+        Command::Rm(x) => x.run(),
     };
     if let Err(error) = command_result {
         error!("{}", error);

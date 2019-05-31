@@ -30,6 +30,14 @@ Without version specified like `dargo add failure libc`, add latest version depe
 
 With version requirement like `dargo add futures-preview@>=0.3.0-alpha.12 libc@^1.0.1`, add dependencies with specified version requirement.
 
+## dargo rm
+
+Remove dependencies from your `Cargo.toml`, more usage: `dargo rm -h`.
+
+# Tips
+
++ `dargo upgrade` and `dargo add` would not update local registry index, unless run with flag `--update`.
+
 # Position
 
 There are some useful CLI tools for Rust developers, for example, [cargo-edit](https://github.com/killercup/cargo-edit), [cargo-outdated](https://github.com/kbknapp/cargo-outdated).
@@ -38,6 +46,6 @@ They are fabulous, but for some reason, some designs are not suitable for my nee
 
 # TODO 
 
-## dargo remove
+## dargo outdated
 
-Just like [cargo-edit](https://github.com/killercup/cargo-edit)
+Check dependencies in Cargo.lock

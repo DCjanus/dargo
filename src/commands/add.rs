@@ -16,7 +16,7 @@ pub struct Add {
     )]
     dependencies: Vec<String>,
 
-    /// Path to the manifest to add
+    /// Path to the manifest to edit
     #[structopt(name = "manifest", long, value_name = "path", default_value = ".")]
     manifest: String,
 
@@ -36,16 +36,16 @@ pub struct Add {
     #[structopt(name = "dry", long)]
     dry: bool,
 
-    /// Don't update local index before add dependencies
-    #[structopt(name = "no_update", long)]
-    no_update: bool,
+    /// Update index before query latest version
+    #[structopt(name = "update", long)]
+    update: bool,
 }
 
 impl Add {
     fn manifest_path(&self) -> DargoResult<PathBuf> {
         let mut manifest_path = PathBuf::from(&self.manifest);
         if manifest_path.is_dir() {
-            manifest_path = manifest_path.join("Cargo.toml");
+            manifest_path.push("Cargo.toml");
         }
         Ok(manifest_path.canonicalize()?)
     }
@@ -72,7 +72,7 @@ impl Add {
         let manifest_text = std::fs::read_to_string(&manifest_path)?;
         let mut document = manifest_text.parse::<Document>()?;
 
-        if !self.no_update {
+        if self.update {
             crate::crates::update_index(source_id)?;
         }
 

@@ -49,9 +49,8 @@ impl Upgrade {
     fn manifest_path(&self) -> DargoResult<PathBuf> {
         let mut manifest_path = PathBuf::from(&self.manifest);
         if manifest_path.is_dir() {
-            manifest_path = manifest_path.join("Cargo.toml");
+            manifest_path.push("Cargo.toml");
         }
-
         Ok(manifest_path.canonicalize()?)
     }
 

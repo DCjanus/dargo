@@ -1,4 +1,5 @@
 pub mod add;
+pub mod rm;
 pub mod upgrade;
 
 use structopt::StructOpt;
@@ -14,4 +15,8 @@ pub enum Command {
     /// Add dependencies to your Cargo.toml
     #[structopt(name = "add")]
     Add(self::add::Add),
+
+    /// Remove dependencies from your Cargo.toml
+    #[structopt(name = "rm")]
+    Rm(self::rm::Rm),
 }
