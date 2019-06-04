@@ -36,6 +36,10 @@ pub struct Upgrade {
     /// Update index before query latest version
     #[structopt(name = "update", long)]
     update: bool,
+
+    /// Upgrade all kinds of version requirements to latest
+    #[structopt(name = "force", long)]
+    force: bool,
 }
 
 #[derive(Debug)]
@@ -88,27 +92,34 @@ impl Upgrade {
             Some(x) => x,
         };
 
-        let result = if let Ok(current_version) = Version::parse(version_req_text) {
-            // Version requirements like: 0.1.2, 2.1.0, 3.1.12-beta
-            if current_version == latest_version {
-                None
-            } else {
-                Some(latest_version)
+        let current_version = match Version::parse(version_req_text) {
+            Ok(x) => x, // Version requirements like '0.1.0', rather than '^0.1.0', '0.1', '~0.1.0', '1.*', '>=0.1.0'
+            Err(_) => {
+                if self.force {
+                    // Upgrade all version requirements
+                    let task = UpgradeTask {
+                        dependency: dependency.clone(),
+                        pre_version: version_req_text.to_string(),
+                        new_version: latest_version.to_string(),
+                    };
+                    return Ok(Some(task));
+                } else {
+                    // Ignore version requirements like '^0.1.0', '0.1', '~0.1.0', '1.*', '>=0.1.0'
+                    return Ok(None);
+                }
             }
+        };
+
+        if current_version == latest_version {
+            Ok(None)
         } else {
-            // Version requirements like: =0.1.2, <1.2.3, >= 2.3.0 ...
-            if dependency.version_req().matches(&latest_version) {
-                None
-            } else {
-                Some(latest_version)
-            }
+            let task = UpgradeTask {
+                dependency: dependency.clone(),
+                pre_version: version_req_text.to_string(),
+                new_version: latest_version.to_string(),
+            };
+            Ok(Some(task))
         }
-        .map(|version: Version| UpgradeTask {
-            dependency: dependency.clone(),
-            pre_version: version_req_text.to_string(),
-            new_version: version.to_string(),
-        });
-        Ok(result)
     }
 
     pub fn run(self) -> DargoResult<()> {

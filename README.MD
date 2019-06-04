@@ -12,15 +12,17 @@ Latest released: `cargo install -f dargo`
 
 Latest branched: `cargo install -f dargo --git https://github.com/DCjanus/dargo.git`
 
+PS: Recommend to use [cargo-update](https://github.com/nabijaczleweli/cargo-update) to keep all tools up to date.
+
 # Commands
 
 ## dargo upgrade
 
 Upgrade version requirements in `Cargo.toml` to latest, more usage: `dargo upgrade -h`.
 
-Version requirements like `1.2.3`, `0.1.2`, always updated to the latest version. Version requirements like `^1.2.3`, `~2.0.1`, `=0.3.0`, `1.2`, `1.*`, updated when latest version does not meet current constraints.
+Version requirements like `1.2.3`, `0.1.2`, always updated to the latest version. 
 
-PS: Which means, `>`, `>=`, `*` will never be updated.
+Version requirements like `^1.2.3`, `~2.0.1`, `=0.3.0`, `1.2`, `1.*`, `>0.1.0` would not be upgraded (unless with `--force`). If you want to exclude some dependencies from `dargo upgrade`, those kinds of version requirements could be used.
 
 ## dargo add
 
@@ -49,3 +51,7 @@ They are fabulous, but for some reason, some designs are not suitable for my nee
 ## dargo outdated
 
 Check dependencies in Cargo.lock
+
+## remove cargo dependency
+
+When I'm familiar with `cargo`, I'd like to parse everything by hand rather than `cargo`, it would be helpful to reduce compilation time.([cargo_metadata](https://crates.io/crates/cargo_metadata/)?)
