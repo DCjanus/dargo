@@ -32,6 +32,10 @@ Without version specified like `dargo add failure libc`, add latest version depe
 
 With version requirement like `dargo add futures-preview@>=0.3.0-alpha.12 libc@^1.0.1`, add dependencies with specified version requirement.
 
+### TODO
+
++ fuzzy match: `dargo add foo_foo`, if `foo_foo` doesn't exist, try `foo-foo`.
+
 ## dargo rm
 
 Remove dependencies from your `Cargo.toml`, more usage: `dargo rm -h`.
