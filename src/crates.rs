@@ -82,9 +82,10 @@ pub fn put_dependency_version_req_text(
     new_text: &str,
 ) {
     let item = match platform {
-        None => &mut document[locate_dependency(kind)][name_in_toml],
+        None => &mut document[locate_dependency(kind)].or_insert(toml_edit::table())[name_in_toml],
         Some(platform) => {
-            &mut document["target"][platform.to_string()][locate_dependency(kind)][name_in_toml]
+            &mut document["target"][platform.to_string()][locate_dependency(kind)]
+                .or_insert(toml_edit::table())[name_in_toml]
         }
     };
 
