@@ -68,45 +68,45 @@ impl Add {
         if workspace.is_virtual() {
             return Err(format_err!("This is a virtual workspace"));
         }
-
-        let manifest_text = std::fs::read_to_string(&manifest_path)?;
-        let mut document = manifest_text.parse::<Document>()?;
-
         if self.update {
             crate::crates::update_index(source_id)?;
         }
 
+        let mut document = std::fs::read_to_string(&manifest_path)?.parse::<Document>()?;
+
         let mut tw = tabwriter::TabWriter::new(vec![]);
         for crate_name in &self.dependencies {
-            let (name, version) = match crate_name.splitn(2, '@').collect::<Vec<_>>().as_slice() {
-                [name] => {
-                    let query_result = crate::crates::latest_version(
-                        name,
-                        source_id,
-                        VersionReq::any(),
-                        self.pre,
-                    )?;
-                    match query_result {
-                        None => {
-                            warn!("no available versions found for {}", name);
-                            continue;
-                        }
-                        Some(latest_version) => (name.to_string(), latest_version.to_string()),
-                    }
-                }
-                [name, version] => {
-                    let version_req = VersionReq::parse(version)?;
-                    match crate::crates::latest_version(name, source_id, version_req, self.pre)? {
-                        None => {
-                            warn!("no available versions found for {}@{}", name, version);
-                            continue;
-                        }
-                        Some(_) => (name.to_string(), version.to_string()),
-                    }
-                }
-
+            let (name, version_req) = match crate_name.splitn(2, '@').collect::<Vec<_>>().as_slice()
+            {
+                [name] => (name.to_string(), None),
+                [name, version_req] => (name.to_string(), Some(VersionReq::parse(version_req)?)),
                 _ => unreachable!(),
             };
+
+            let (actual_name, latest_version) = match crate::crates::latest_version_fuzzy(
+                &name,
+                source_id,
+                version_req.clone().unwrap_or_else(VersionReq::any),
+                self.pre,
+            )? {
+                None => {
+                    warn!("no available versions found for {}", name);
+                    continue;
+                }
+                Some(x) => {
+                    if !x.0.eq(&name) {
+                        warn!("Added `{}` instead of `{}`", x.0, name);
+                    }
+                    x
+                }
+            };
+
+            let name = actual_name;
+            let version = match version_req {
+                None => latest_version.to_string(),
+                Some(x) => x.to_string(),
+            };
+
             if crate::crates::get_dependency_version_req_text(&document, self.kind(), None, &name)
                 .is_some()
             {

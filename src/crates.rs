@@ -18,6 +18,37 @@ pub fn update_index(source_id: SourceId) -> DargoResult<()> {
     Ok(())
 }
 
+pub fn latest_version_fuzzy(
+    name: &str,
+    source_id: SourceId,
+    version_req: VersionReq,
+    allow_prerelease: bool,
+) -> DargoResult<Option<(String, Version)>> {
+    if let Some(version) = latest_version(name, source_id, version_req.clone(), allow_prerelease)? {
+        return Ok(Some((name.to_string(), version)));
+    }
+
+    let mut current_name = name.replace('-', "_");
+    loop {
+        if let Some(version) = latest_version(
+            &current_name,
+            source_id,
+            version_req.clone(),
+            allow_prerelease,
+        )? {
+            return Ok(Some((current_name, version)));
+        }
+
+        let new_name = current_name.replacen('_', "-", 1);
+        if new_name == current_name {
+            break;
+        } else {
+            current_name = new_name;
+        }
+    }
+    Ok(None)
+}
+
 pub fn latest_version(
     name: &str,
     source_id: SourceId,

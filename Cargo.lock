@@ -354,7 +354,7 @@ dependencies = [
 
 [[package]]
 name = "dargo"
-version = "0.0.4"
+version = "0.0.5"
 dependencies = [
  "cargo 0.36.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "colored 1.8.0 (registry+https://github.com/rust-lang/crates.io-index)",
