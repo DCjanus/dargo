@@ -6,6 +6,8 @@
 
 Some useful third-party tools based [Cargo](https://github.com/rust-lang/cargo).
 
+**WARNING**: Early stage, almost no documentation and unit testing.
+
 # Install
 
 Latest released: `cargo install -f dargo`
@@ -45,6 +47,8 @@ Remove dependencies from your `Cargo.toml`, more usage: `dargo rm -h`.
 There are some useful CLI tools for Rust developers, for example, [cargo-edit](https://github.com/killercup/cargo-edit), [cargo-outdated](https://github.com/kbknapp/cargo-outdated).
 
 They are fabulous, but for some reason, some designs are not suitable for my needs, for example: for compile speed, `cargo-edit` doesn't rely on [cargo](https://crates.io/crates/cargo), and query latest version of crate via HTTP API, which is so slow in China. So I have to write `dargo` for myself and query latest version from local registry index.
+
+Ref: [cargo-edit#311](https://github.com/killercup/cargo-edit/issues/311)
 
 # TODO 
 
