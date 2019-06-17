@@ -28,24 +28,37 @@ pub fn latest_version_fuzzy(
         return Ok(Some((name.to_string(), version)));
     }
 
-    let mut current_name = name.replace('-', "_");
-    loop {
-        if let Some(version) = latest_version(
-            &current_name,
-            source_id,
-            version_req.clone(),
-            allow_prerelease,
-        )? {
-            return Ok(Some((current_name, version)));
-        }
+    let mut name = name.to_string();
+    let positions: Vec<usize> = name
+        .bytes()
+        .enumerate()
+        .filter(|(_, item)| *item == b'-' || *item == b'_')
+        .map(|(index, _)| index)
+        .collect::<Vec<_>>();
+    match positions.len() {
+        0 => return Ok(None),
+        1..=127 => {}
+        _ => return Err(format_err!("crate name contain too many '-' or '_'")),
+    }
 
-        let new_name = current_name.replacen('_', "-", 1);
-        if new_name == current_name {
-            break;
-        } else {
-            current_name = new_name;
+    for mask in 0..u128::pow(2, positions.len() as u32) {
+        positions.iter().enumerate().for_each(|(index, item)| {
+            #[allow(unsafe_code)]
+            unsafe {
+                name.as_bytes_mut()[*item] = match (mask >> index) & 1 {
+                    0 => b'_',
+                    1 => b'-',
+                    _ => unreachable!(),
+                }
+            };
+        });
+        if let Some(version) =
+            latest_version(&name, source_id, version_req.clone(), allow_prerelease)?
+        {
+            return Ok(Some((name, version)));
         }
     }
+
     Ok(None)
 }
 
