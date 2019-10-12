@@ -14,7 +14,7 @@ readme = "./README.MD"
 
 [dependencies]
 cargo = "0.39.0"
-failure = "0.1.5"
+failure = "0.1.6"
 toml_edit = "0.1.5"
 structopt = "0.3.2"
 log = "0.4.8"
