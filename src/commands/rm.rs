@@ -7,11 +7,7 @@ use toml_edit::Document;
 #[derive(Debug, StructOpt)]
 pub struct Rm {
     /// Dependencies to remove
-    #[structopt(
-        name = "dependencies",
-        value_name = "dependency",
-        raw(required = "true")
-    )]
+    #[structopt(name = "dependencies", value_name = "dependency", required = true)]
     dependencies: Vec<String>,
 
     /// Path to the manifest to edit

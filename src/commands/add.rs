@@ -9,11 +9,7 @@ use toml_edit::Document;
 #[derive(Debug, StructOpt)]
 pub struct Add {
     /// Dependencies to add, only crate name or '{name}@{version}' or '{name}@{version_requirement}', e.g. 'futures-preview@0.3.0-alpha.16', 'libc@>=0.1,<1.0'
-    #[structopt(
-        name = "dependencies",
-        value_name = "dependency",
-        raw(required = "true")
-    )]
+    #[structopt(name = "dependencies", value_name = "dependency", required = true)]
     dependencies: Vec<String>,
 
     /// Path to the manifest to edit
