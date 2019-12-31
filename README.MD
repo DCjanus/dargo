@@ -6,7 +6,7 @@
 
 Some useful third-party tools based [Cargo](https://github.com/rust-lang/cargo).
 
-**WARNING**: Early stage, almost no documentation and unit testing.
+**WARNING**: Deprecated, with [cargo#317](https://github.com/killercup/cargo-edit/pull/317), `cargo-edit` is using local registry index rather HTTP API, there is no need to use dargo.
 
 # Install
 
@@ -49,13 +49,3 @@ There are some useful CLI tools for Rust developers, for example, [cargo-edit](h
 They are fabulous, but for some reason, some designs are not suitable for my needs, for example: for compile speed, `cargo-edit` doesn't rely on [cargo](https://crates.io/crates/cargo), and query latest version of crate via HTTP API, which is so slow in China. So I have to write `dargo` for myself and query latest version from local registry index.
 
 Ref: [cargo-edit#311](https://github.com/killercup/cargo-edit/issues/311)
-
-# TODO 
-
-## dargo outdated
-
-Check dependencies in Cargo.lock
-
-## remove cargo dependency
-
-When I'm familiar with `cargo`, I'd like to parse everything by hand rather than `cargo`, it would be helpful to reduce compilation time.([cargo_metadata](https://crates.io/crates/cargo_metadata/)?)
