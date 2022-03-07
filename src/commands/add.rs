@@ -1,10 +1,12 @@
-use crate::DargoResult;
+use std::{io::Write, path::PathBuf};
+
 use cargo::core::{SourceId, Workspace};
 use colored::Colorize;
 use semver::VersionReq;
-use std::{io::Write, path::PathBuf};
 use structopt::StructOpt;
 use toml_edit::Document;
+
+use crate::DargoResult;
 
 #[derive(Debug, StructOpt)]
 pub struct Add {
@@ -46,13 +48,13 @@ impl Add {
         Ok(manifest_path.canonicalize()?)
     }
 
-    fn kind(&self) -> cargo::core::dependency::Kind {
+    fn kind(&self) -> cargo::core::dependency::DepKind {
         if self.dev {
-            cargo::core::dependency::Kind::Development
+            cargo::core::dependency::DepKind::Development
         } else if self.build {
-            cargo::core::dependency::Kind::Build
+            cargo::core::dependency::DepKind::Build
         } else {
-            cargo::core::dependency::Kind::Normal
+            cargo::core::dependency::DepKind::Normal
         }
     }
 
@@ -62,7 +64,7 @@ impl Add {
         let source_id = SourceId::crates_io(&config)?;
         let workspace = Workspace::new(&manifest_path, config)?;
         if workspace.is_virtual() {
-            return Err(format_err!("This is a virtual workspace"));
+            return Err(anyhow!("This is a virtual workspace"));
         }
         if self.update {
             crate::crates::update_index(source_id)?;
@@ -82,7 +84,7 @@ impl Add {
             let (actual_name, latest_version) = match crate::crates::latest_version_fuzzy(
                 &name,
                 source_id,
-                version_req.clone().unwrap_or_else(VersionReq::any),
+                version_req.clone().unwrap_or(VersionReq::STAR),
                 self.pre,
             )? {
                 None => {

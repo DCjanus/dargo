@@ -1,12 +1,11 @@
 use crate::DargoResult;
+use cargo::core::dependency::DepKind;
+use cargo::util::VersionExt;
 use cargo::{
-    core::{
-        dependency::{Kind as DependencyKind, Platform},
-        source::Source,
-        Dependency, SourceId, Summary,
-    },
+    core::{source::Source, Dependency, SourceId, Summary},
     sources::SourceConfigMap,
 };
+use cargo_platform::Platform;
 use semver::{Version, VersionReq};
 use toml_edit::Document;
 
@@ -70,7 +69,7 @@ pub fn latest_version(
 ) -> DargoResult<Option<Version>> {
     let config = cargo::Config::default()?;
     let source_config_map = SourceConfigMap::new(&config)?;
-    let mut dependency = Dependency::parse_no_deprecated(name, None, source_id)?;
+    let mut dependency = Dependency::parse(name, None, source_id)?;
     dependency.set_version_req(version_req);
 
     let mut result: Option<Version> = None;
@@ -90,17 +89,17 @@ pub fn latest_version(
     Ok(result)
 }
 
-pub fn locate_dependency(kind: DependencyKind) -> &'static str {
+pub fn locate_dependency(kind: DepKind) -> &'static str {
     match kind {
-        DependencyKind::Normal => "dependencies",
-        DependencyKind::Development => "dev-dependencies",
-        DependencyKind::Build => "build-dependencies",
+        DepKind::Normal => "dependencies",
+        DepKind::Development => "dev-dependencies",
+        DepKind::Build => "build-dependencies",
     }
 }
 
 pub fn get_dependency_version_req_text<'a>(
     document: &'a Document,
-    kind: DependencyKind,
+    kind: DepKind,
     platform: Option<&Platform>,
     name_in_toml: &str,
 ) -> Option<&'a str> {
@@ -120,17 +119,15 @@ pub fn get_dependency_version_req_text<'a>(
 
 pub fn put_dependency_version_req_text(
     document: &mut Document,
-    kind: DependencyKind,
+    kind: DepKind,
     platform: Option<&Platform>,
     name_in_toml: &str,
     new_text: &str,
 ) {
     let item = match platform {
         None => &mut document[locate_dependency(kind)].or_insert(toml_edit::table())[name_in_toml],
-        Some(platform) => {
-            &mut document["target"][platform.to_string()][locate_dependency(kind)]
-                .or_insert(toml_edit::table())[name_in_toml]
-        }
+        Some(platform) => &mut document["target"][platform.to_string()][locate_dependency(kind)]
+            .or_insert(toml_edit::table())[name_in_toml],
     };
 
     let new_value = toml_edit::value(new_text);

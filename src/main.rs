@@ -1,7 +1,7 @@
 #[macro_use]
 extern crate log;
 #[macro_use]
-extern crate failure;
+extern crate anyhow;
 
 pub mod commands;
 pub mod crates;
@@ -9,7 +9,7 @@ pub mod crates;
 use std::process::exit;
 use structopt::StructOpt;
 
-pub type DargoResult<T> = std::result::Result<T, failure::Error>;
+pub type DargoResult<T> = anyhow::Result<T>;
 use crate::commands::Command;
 
 fn main() {
@@ -27,7 +27,8 @@ fn main() {
 }
 
 fn init_logger() {
-    flexi_logger::Logger::with_env_or_str("warn")
+    flexi_logger::Logger::try_with_env_or_str("warn")
+        .unwrap()
         .format(|w, _, record| write!(w, "[{}] {}", record.level(), &record.args()))
         .start()
         .unwrap_or_else(|e| panic!("Logger initialization failed with {}", e));
