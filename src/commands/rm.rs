@@ -36,13 +36,13 @@ impl Rm {
         Ok(manifest_path)
     }
 
-    fn dependencies_kind(&self) -> cargo::core::dependency::Kind {
+    fn dependencies_kind(&self) -> cargo::core::dependency::DepKind {
         if self.build {
-            cargo::core::dependency::Kind::Build
+            cargo::core::dependency::DepKind::Build
         } else if self.dev {
-            cargo::core::dependency::Kind::Development
+            cargo::core::dependency::DepKind::Development
         } else {
-            cargo::core::dependency::Kind::Normal
+            cargo::core::dependency::DepKind::Normal
         }
     }
 

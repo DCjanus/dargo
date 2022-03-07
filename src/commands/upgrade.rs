@@ -79,7 +79,7 @@ impl Upgrade {
         let latest_version = match crate::crates::latest_version(
             dependency.package_name().as_str(),
             dependency.source_id(),
-            VersionReq::any(),
+            VersionReq::STAR,
             self.pre,
         )? {
             None => {
